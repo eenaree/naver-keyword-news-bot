@@ -293,9 +293,10 @@ function runFetchingBot() {
 
   // lastArticleUpdateTime 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
   if (!lastArticleUpdateTime) {
+    Logger.log('* 뉴스봇 초기 설정을 시작합니다.');
     feed = getFeed(g.keyword, g.clientId, g.clientSecret, true);
-    Logger.log('* 뉴스봇 초기 설정을 시작합니다.\n');
   } else {
+    Logger.log('* 뉴스 피드를 가져오는 중입니다.');
     feed = getFeed(g.keyword, g.clientId, g.clientSecret);
   }
 

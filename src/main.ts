@@ -57,16 +57,21 @@ function getFeedUrl(keyword: string, startup: boolean) {
 }
 
 function getFeed(keyword: string, clientId: string, clientSecret: string, startup = false) {
-  const feedUrl = getFeedUrl(keyword, startup);
-  const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: 'get',
-    headers: {
-      'X-Naver-Client-Id': clientId,
-      'X-Naver-Client-Secret': clientSecret,
-    },
-  };
+  try {
+    const feedUrl = getFeedUrl(keyword, startup);
+    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: 'get',
+      headers: {
+        'X-Naver-Client-Id': clientId,
+        'X-Naver-Client-Secret': clientSecret,
+      },
+    };
 
-  return UrlFetchApp.fetch(feedUrl, options);
+    return UrlFetchApp.fetch(feedUrl, options);
+  } catch (error) {
+    Logger.log(error);
+    throw new Error('네이버 뉴스 피드를 불러오는 도중, 에러가 발생했습니다.');
+  }
 }
 
 function getSource(originallink: string) {

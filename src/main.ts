@@ -151,6 +151,10 @@ function checkSourceIndex(
   return -1;
 }
 
+function formatDate(date: Date, format: string) {
+  return Utilities.formatDate(date, 'GMT+9', format);
+}
+
 function getArticle(
   g: ReturnType<typeof globalVariables>,
   feed: GoogleAppsScript.URL_Fetch.HTTPResponse,
@@ -171,7 +175,7 @@ function getArticle(
       const link = items[i].getChildText('link');
       const source = getSource(items[i].getChildText('originallink'));
       const description = bleachText(items[i].getChildText('description'));
-      const pubDateText = Utilities.formatDate(pubDate, 'GMT+9', 'yyyy-MM-dd HH:mm:ss');
+      const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
 
       // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
       if (g.DEBUG) {
@@ -200,11 +204,7 @@ function getArticle(
     if (!lastPubTime) {
       throw new Error('가장 최신 뉴스의 업로드 시간을 불러오는 도중 에러가 발생했습니다.');
     }
-    const lastPubDateText = Utilities.formatDate(
-      new Date(+lastPubTime),
-      'GMT+9',
-      'yyyy-MM-dd HH:mm:ss'
-    );
+    const lastPubDateText = formatDate(new Date(+lastPubTime), 'yyyy-MM-dd HH:mm:ss');
     Logger.log(`${lastPubDateText} 이후, 업데이트된 최신 기사가 없습니다.`);
   } else {
     Logger.log(`* 총 ${cnt} 건의 항목이 게시되었습니다.`);

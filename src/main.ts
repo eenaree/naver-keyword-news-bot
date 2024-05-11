@@ -158,25 +158,40 @@ function formatDate(date: Date, format: string) {
 function getArticle(
   g: ReturnType<typeof globalVariables>,
   feed: GoogleAppsScript.URL_Fetch.HTTPResponse,
-  lastArticleUpdateTime: number | null
+  lastArticleLink: string | null
 ) {
   // 뉴스 검색 결과물을 가져와 item 단위로 시간순 정렬시키고 Fetching 작업을 시작한다.
   const xml = XmlService.parse(feed.getContentText());
   const items = xml.getRootElement().getChild('channel').getChildren('item').reverse();
 
   let cnt = 0;
+  let isLinkFound = false;
 
   for (let i = 0; i < items.length; i++) {
+    // 각 item 별로 데이터 필드들을 가져온다.
+    const title = bleachText(items[i].getChildText('title'));
+    const link = items[i].getChildText('link');
+    const originallink = items[i].getChildText('originallink');
+    const source = getSource(originallink);
+    const description = bleachText(items[i].getChildText('description'));
     const pubDate = new Date(items[i].getChildText('pubDate'));
+    const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
 
-    if (!lastArticleUpdateTime || pubDate.getTime() > lastArticleUpdateTime) {
-      // 각 item 별로 데이터 필드들을 가져온다.
-      const title = bleachText(items[i].getChildText('title'));
-      const link = items[i].getChildText('link');
-      const source = getSource(items[i].getChildText('originallink'));
-      const description = bleachText(items[i].getChildText('description'));
-      const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
+    // 저장된 기사의 링크가 없는 경우 => 앱 초기 설정 단계이므로 마지막 기사의 링크와 업데이트 시점을 저장하고 트리거 자동설정
+    if (!lastArticleLink) {
+      setProperty('lastArticleLink', originallink);
+      setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
+      ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();
+      return;
+    }
 
+    // 저장된 기사의 링크가 있는 경우 => 저장된 링크의 다음 기사부터 전달하도록 설정
+    if (lastArticleLink === originallink) {
+      isLinkFound = true;
+      continue;
+    }
+
+    if (isLinkFound) {
       // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
       if (g.DEBUG) {
         Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
@@ -194,7 +209,8 @@ function getArticle(
         }
       }
 
-      // PropertiesService 객체에 마지막 뉴스 업데이트 시점을 새로 업데이트한다.
+      // PropertiesService 객체에 마지막 뉴스 업데이트 시점과 링크를 새로 업데이트한다.
+      setProperty('lastArticleLink', originallink);
       setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
     }
   }
@@ -287,12 +303,13 @@ function runFetchingBot() {
     return;
   }
 
-  // PropertiesService 객체에 저장된 lastArticleUpdateTime 속성값이 있는지 체크한다.
-  const lastArticleUpdateTime = getProperty('lastArticleUpdateTime');
+  // PropertiesService 객체에 저장된 lastArticleLink 속성값이 있는지 체크한다.
+  const lastArticleLink = getProperty('lastArticleLink');
+  // const lastArticleUpdateTime = getProperty('lastArticleUpdateTime');
   let feed: GoogleAppsScript.URL_Fetch.HTTPResponse;
 
-  // lastArticleUpdateTime 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
-  if (!lastArticleUpdateTime) {
+  // lastArticleLink 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
+  if (!lastArticleLink) {
     Logger.log('* 뉴스봇 초기 설정을 시작합니다.');
     feed = getFeed(g.keyword, g.clientId, g.clientSecret, true);
   } else {
@@ -302,7 +319,8 @@ function runFetchingBot() {
 
   // 네이버 뉴스 피드를 체크하고, 피드의 응답 코드가 정상(200)이라면 뉴스봇 기능을 구동한다.
   if (feed.getResponseCode() == 200) {
-    getArticle(g, feed, Number(lastArticleUpdateTime));
+    Logger.log('* 뉴스 피드에 대한 필터링을 시작합니다.');
+    getArticle(g, feed, lastArticleLink);
   }
 
   // 200 이외의 응답 코드가 리턴될 경우 에러 체크를 위한 헤더 및 내용을 로그로 출력시킨다.

@@ -24,7 +24,7 @@ function globalVariables() {
     clientSecret: '[네이버 오픈 API용 Client Secret]',
 
     // 네이버 뉴스 검색어
-    keyword: '문가영',
+    keyword: '',
 
     // Telegram 설정
     TELEGRAM_BOT_TOKEN: '[TELEGRAM_BOT_TOKEN]',
@@ -200,12 +200,12 @@ function getArticle(
 
       // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
       else {
-        if (title.includes('문가영')) {
+        if (title.includes(g.keyword)) {
           Logger.log("'" + title + "' 항목 게시 중...");
           postArticle(g, pubDateText, title, source, link);
           cnt++;
         } else {
-          Logger.log(`'${title}' 항목은 문가영님과 관련된 주요 기사가 아닙니다.`);
+          Logger.log(`'${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
         }
       }
 

@@ -262,9 +262,9 @@ function bleachText(text: string) {
   text = text.replace(/(<([^>]+)>)/gi, '');
   text = text.replace(/&quot;/gi, '"');
   text = text.replace(/&#039;/gi, "'");
-  text = text.replace(/&lt;/gi, '<');
-  text = text.replace(/&gt;/gi, '>');
-  text = text.replace(/&amp;/gi, '&');
+  // text = text.replace(/&lt;/gi, '<');
+  // text = text.replace(/&gt;/gi, '>');
+  // text = text.replace(/&amp;/gi, '&');
   text = text.replace(/`/gi, "'");
   text = text.replace(/&apos;/gi, "'");
 

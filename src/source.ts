@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2024년 4월 27일
+ * - 마지막 업데이트 : 2024년 5월 22일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -630,6 +630,7 @@ export function listSource() {
     ['spotvnews.co.kr', '스포티비뉴스'],
     ['srn.hcn.co.kr', 'HCN 새로넷방송'],
     ['srtimes.kr', 'SR타임스'],
+    ['star.ytn.co.kr', 'YTN'],
     ['stardailynews.co.kr', '스타데일리뉴스'],
     ['starin.edaily.co.kr', '이데일리'],
     ['starnewsk.com', 'K STAR'],

@@ -44,7 +44,7 @@ export function listSource() {
     ['beminor.com', '비마이너'],
     ['beopbo.com', '법보신문'],
     ['besteleven.com', '베스트일레븐'],
-    ['betanews.co.kr', '베타뉴스'],
+    ['betanews.net', '베타뉴스'],
     ['beyondpost.co.kr', '비욘드포스트'],
     ['bigtanews.co.kr', '빅터뉴스'],
     ['biz.chosun.com', '조선비즈'],

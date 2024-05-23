@@ -284,9 +284,9 @@ function postArticle(
       method: 'post',
       payload: {
         chat_id: g.TELEGRAM_CHAT_ID,
-        text: createArticleTemplate(pubDateText, title, source, link),
+        text: createArticleTemplate(pubDateText, title, source, removePort(link)),
         parse_mode: 'HTML',
-        link_preview_options: JSON.stringify({ url: link, prefer_large_media: true }),
+        link_preview_options: JSON.stringify({ url: removePort(link), prefer_large_media: true }),
       },
     };
 
@@ -295,6 +295,10 @@ function postArticle(
     Logger.log(error);
     throw new Error('텔레그램 메세지를 전송하는 과정에서 에러가 발생했습니다.');
   }
+}
+
+function removePort(url: string) {
+  return url.replace(/:\d+/, '');
 }
 
 function bleachText(text: string) {

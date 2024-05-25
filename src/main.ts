@@ -183,9 +183,19 @@ function getArticle(
 
     // 저장된 기사의 링크가 있는 경우 => 저장된 링크의 다음 기사부터 전달하도록 설정
     if (originallink === lastArticleLink) {
+      Logger.log(`마지막 업데이트된 기사를 찾았습니다. 50개 중 ${i + 1}번째`);
       linkIndex = i;
       break;
     }
+  }
+
+  if (linkIndex + 1 === 50) {
+    if (!lastArticleUpdateTime) {
+      throw new Error('마지막 업데이트 기사의 업로드 시간이 존재하지 않습니다.');
+    }
+    const lastPubDateText = formatDate(new Date(+lastArticleUpdateTime), 'yyyy-MM-dd HH:mm:ss');
+    Logger.log(`${lastPubDateText} 이후, 업데이트된 최신 기사가 없습니다.`);
+    return;
   }
 
   if (linkIndex === -1) {
@@ -223,6 +233,7 @@ function getArticle(
       }
     }
   } else {
+    Logger.log(`최신 기사: ${50 - linkIndex - 1}개`);
     for (let i = linkIndex + 1; i < items.length; i++) {
       const title = bleachText(items[i].getChildText('title'));
       const link = items[i].getChildText('link');
@@ -255,16 +266,13 @@ function getArticle(
     }
   }
 
-  if (cnt === 0) {
-    let lastPubTime = getProperty('lastArticleUpdateTime');
-    if (!lastPubTime) {
-      throw new Error('가장 최신 뉴스의 업로드 시간을 불러오는 도중 에러가 발생했습니다.');
-    }
-    const lastPubDateText = formatDate(new Date(+lastPubTime), 'yyyy-MM-dd HH:mm:ss');
-    Logger.log(`${lastPubDateText} 이후, 업데이트된 최신 기사가 없습니다.`);
-  } else {
-    Logger.log(`* 총 ${cnt} 건의 항목이 게시되었습니다.`);
+  let lastPubTime = getProperty('lastArticleUpdateTime');
+  if (!lastPubTime) {
+    throw new Error('마지막 업데이트 기사의 업로드 시간을 불러오는 도중 에러가 발생했습니다.');
   }
+  const lastPubDateText = formatDate(new Date(+lastPubTime), 'yyyy-MM-dd HH:mm:ss');
+  Logger.log(`* 총 ${cnt} 건의 항목이 게시되었습니다.`);
+  Logger.log(`마지막 업데이트 기사의 업로드 시간: ${lastPubDateText}`);
 }
 
 function createArticleTemplate(pubDateText: string, title: string, source: string, link: string) {

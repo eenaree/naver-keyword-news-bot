@@ -251,6 +251,11 @@ function getArticle(
 
       // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
       else {
+        if (lastArticleUpdateTime && pubDate.getTime() <= lastArticleUpdateTime) {
+          Logger.log(`'${title}' 항목 업로드 시간: ${pubDateText}`);
+          Logger.log(`'${title}' 항목은 마지막 기사 업데이트 시간 이전에 업로드된 기사입니다.`);
+          continue;
+        }
         if (title.includes(g.keyword)) {
           Logger.log("'" + title + "' 항목 게시 중...");
           postArticle(g, pubDateText, title, source, link);

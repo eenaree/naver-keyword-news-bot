@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2024년 5월 23일
+ * - 마지막 업데이트 : 2024년 6월 6일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -255,6 +255,7 @@ export function listSource() {
     ['greenpostkorea.co.kr', '그린포스트코리아'],
     ['gukjenews.com', '국제뉴스'],
     ['h21.hani.co.kr', '한겨레21'],
+    ['handmk.com', '핸드메이커'],
     ['hani.co.kr', '한겨레'],
     ['hankookilbo.com', '한국일보'],
     ['hankyung.com', '한국경제'],
@@ -292,6 +293,7 @@ export function listSource() {
     ['ilemonde.com', '르몽드'],
     ['ilovepc.co.kr', 'PC사랑'],
     ['ilyo.co.kr', '일요신문'],
+    ['ilyoseoul.co.kr', '일요서울'],
     ['ilyosisa.co.kr', '일요시사'],
     ['imaeil.com', '매일신문'],
     ['iminju.net', '민주신문'],
@@ -444,6 +446,7 @@ export function listSource() {
     ['magazine.hankyung.com/money', '머니'],
     ['maniareport.com', '마니아타임즈'],
     ['marieclairekorea.com', '마리끌레르'],
+    ['maxmovie.com', '맥스무비'],
     ['mbccb.co.kr', 'MBC충북'],
     ['mbceg.co.kr', 'MBC강원영동'],
     ['mbcgn.kr', 'MBC경남'],

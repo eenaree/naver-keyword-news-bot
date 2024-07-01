@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2024년 6월 26일
+ * - 마지막 업데이트 : 2024년 7월 1일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -49,7 +49,7 @@ export function listSource() {
     ['bigtanews.co.kr', '빅터뉴스'],
     ['biz.chosun.com', '조선비즈'],
     ['biz.heraldcorp.com', '헤럴드POP'],
-    ['biz.newsdaily.co.kr', '뉴데일리'],
+    ['biz.newdaily.co.kr', '뉴데일리'],
     ['biz.sbs.co.kr', 'SBS Biz'],
     ['bizhankook.com', '비즈한국'],
     ['biztribune.co.kr', '비즈트리뷴'],
@@ -75,7 +75,7 @@ export function listSource() {
     ['catholicnews.co.kr', '가톨릭뉴스 지금여기'],
     ['catholictimes.org', '가톨릭신문'],
     ['cbci.co.kr', 'CBC뉴스'],
-    ['cc.newsdaily.co.kr', '뉴데일리'],
+    ['cc.newdaily.co.kr', '뉴데일리'],
     ['ccdailynews.com', '충청일보'],
     ['ccdn.co.kr', '충청매일'],
     ['ccnnews.co.kr', '충청뉴스'],
@@ -228,10 +228,10 @@ export function listSource() {
     ['gasnews.com', '가스신문'],
     ['geconomy.co.kr', '지이코노미'],
     ['getnews.co.kr', '글로벌경제'],
-    ['gg.newsdaily.co.kr', '뉴데일리'],
+    ['gg.newdaily.co.kr', '뉴데일리'],
     ['ggilbo.com', '금강일보'],
     ['gimhaenews.co.kr', '김해뉴스'],
-    ['gj.newsdaily.co.kr', '뉴데일리'],
+    ['gj.newdaily.co.kr', '뉴데일리'],
     ['gjdream.com', '광주드림'],
     ['globale.co.kr', '글로벌E'],
     ['globalepic.co.kr', '글로벌에픽'],
@@ -557,7 +557,7 @@ export function listSource() {
     ['pharmnews.com', '팜뉴스'],
     ['phmbc.co.kr', '포항MBC'],
     ['pinpointnews.co.kr', '핀포인트뉴스'],
-    ['pk.newsdaily.co.kr', '뉴데일리'],
+    ['pk.newdaily.co.kr', '뉴데일리'],
     ['platum.kr', '플래텀'],
     ['pointdaily.co.kr', '포인트데일리'],
     ['pointe.co.kr', '포인트경제'],
@@ -681,7 +681,7 @@ export function listSource() {
     ['thisisgame.com', '디스이즈게임'],
     ['tjb.co.kr', 'TJB 대전방송'],
     ['tjmbc.co.kr', '대전MBC'],
-    ['tk.newsdaily.co.kr', '뉴데일리'],
+    ['tk.newdaily.co.kr', '뉴데일리'],
     ['todayenergy.kr', '투데이에너지'],
     ['todaykorea.co.kr', '투데이코리아'],
     ['tongilnews.com', '통일뉴스'],

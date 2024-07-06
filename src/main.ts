@@ -38,7 +38,7 @@ function globalVariables() {
 
 function getFeedUrl(keyword: string, startup: boolean) {
   // 뉴스 검색 결과 출력 건수 지정 (미지정시 기본값 10, 최대 100; 권장값 10~50)
-  const display = '50';
+  const display = '100';
 
   // 뉴스 검색 시작 위치 지정 (미지정시 기본값 1, 최대 1000; 권장값 1)
   const start = '1';
@@ -183,13 +183,13 @@ function getArticle(
 
     // 저장된 기사의 링크가 있는 경우 => 저장된 링크의 다음 기사부터 전달하도록 설정
     if (originallink === lastArticleLink) {
-      Logger.log(`마지막 업데이트된 기사를 찾았습니다. 50개 중 ${i + 1}번째`);
+      Logger.log(`마지막 업데이트된 기사를 찾았습니다. 100개 중 ${i + 1}번째`);
       linkIndex = i;
       break;
     }
   }
 
-  if (linkIndex + 1 === 50) {
+  if (linkIndex + 1 === 100) {
     if (!lastArticleUpdateTime) {
       throw new Error('마지막 업데이트 기사의 업로드 시간이 존재하지 않습니다.');
     }
@@ -233,7 +233,7 @@ function getArticle(
       }
     }
   } else {
-    Logger.log(`최신 기사: ${50 - linkIndex - 1}개`);
+    Logger.log(`최신 기사: ${100 - linkIndex - 1}개`);
     for (let i = linkIndex + 1; i < items.length; i++) {
       const title = bleachText(items[i].getChildText('title'));
       const link = items[i].getChildText('link');

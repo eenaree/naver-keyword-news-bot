@@ -256,7 +256,7 @@ function getArticle(
           Logger.log(
             `[${source}] '${title}' 항목은 마지막 기사 업데이트 시간 이전에 업로드된 기사입니다.`
           );
-          Logger.log(originallink);
+          Logger.log(link);
           continue;
         }
         if (title.includes(g.keyword)) {
@@ -265,7 +265,7 @@ function getArticle(
           cnt++;
         } else {
           Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
-          Logger.log(originallink);
+          Logger.log(link);
         }
       }
 

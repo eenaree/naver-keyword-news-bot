@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2024년 7월 18일
+ * - 마지막 업데이트 : 2024년 7월 26일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -536,6 +536,7 @@ export function listSource() {
     ['newsworks.co.kr', '뉴스웍스'],
     ['nextdaily.co.kr', '넥스트데일리'],
     ['ngetnews.com', '뉴스저널리즘'],
+    ['ngonews.kr', '한국NGO신문'],
     ['niceeconomy.co.kr', '나이스경제'],
     ['nocutnews.co.kr', '노컷뉴스'],
     ['nongaek.com', '논객닷컴'],
@@ -586,6 +587,7 @@ export function listSource() {
     ['s-journal.co.kr', 'S-저널'],
     ['safetimes.co.kr', '세이프타임즈'],
     ['safetynews.co.kr', '안전신문'],
+    ['sateconomy.co.kr', '토요경제'],
     ['sbs.co.kr', 'SBS'],
     ['science.ytn.co.kr', 'YTN사이언스'],
     ['sctoday.co.kr', '서울문화투데이'],
@@ -689,6 +691,7 @@ export function listSource() {
     ['todaykorea.co.kr', '투데이코리아'],
     ['tongilnews.com', '통일뉴스'],
     ['topclass.chosun.com', '톱클래스'],
+    ['topdaily.kr', '톱데일리'],
     ['topstarnews.net', '톱스타뉴스'],
     ['tournews21.com', '투어코리아뉴스'],
     ['travelitoday.com', '트래블투데이'],

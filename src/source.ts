@@ -410,7 +410,7 @@ export function listSource() {
     ['kormedi.com', '코메디닷컴'],
     ['kpanews.co.kr', '약사공론'],
     ['kpenews.com', '한국정경신문'],
-    ['kpinews.co.kr', 'KPI뉴스'],
+    ['kpinews.kr', 'KPI뉴스'],
     ['kr.aving.net', '에이빙뉴스'],
     ['kr.people.com.cn', '인민망'],
     ['ksg.co.kr', '코리아쉬핑가제트'],

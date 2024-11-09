@@ -155,6 +155,19 @@ function formatDate(date: Date, format: string) {
   return Utilities.formatDate(date, 'GMT+9', format);
 }
 
+function checkTriggerExists(triggerName: string) {
+  let hasTrigger = false;
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === triggerName) {
+      Logger.log(`${triggerName} 트리거가 이미 존재합니다.`);
+      hasTrigger = true;
+      break;
+    }
+  }
+  return hasTrigger;
+}
+
 function getArticle(
   g: ReturnType<typeof globalVariables>,
   feed: GoogleAppsScript.URL_Fetch.HTTPResponse,
@@ -177,15 +190,7 @@ function getArticle(
     if (!(lastArticleLink && lastArticleUpdateTime)) {
       setProperty('lastArticleLink', originallink);
       setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
-      let hasTrigger = false;
-      const triggers = ScriptApp.getProjectTriggers();
-      for (let i = 0; i < triggers.length; i++) {
-        if (triggers[i].getHandlerFunction() === 'runFetchingBot') {
-          Logger.log('runFetchingBot 트리거가 이미 존재합니다.');
-          hasTrigger = true;
-          break;
-        }
-      }
+      const hasTrigger = checkTriggerExists('runFetchingBot');
       if (!hasTrigger) {
         Logger.log('runFetchingBot 트리거를 생성합니다.');
         ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();

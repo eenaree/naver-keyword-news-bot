@@ -565,6 +565,7 @@ export function listSource() {
     ['platum.kr', '플래텀'],
     ['pointdaily.co.kr', '포인트데일리'],
     ['pointe.co.kr', '포인트경제'],
+    ['polinews.co.kr', '폴리뉴스'],
     ['popcornnews.net', '팝콘뉴스'],
     ['ppss.kr', 'ㅍㅍㅅㅅ'],
     ['press9.kr', '프레스나인'],

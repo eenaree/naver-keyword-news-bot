@@ -237,7 +237,7 @@ function getArticle(
         else {
           if (title.includes(g.keyword)) {
             Logger.log("'" + title + "' 항목 게시 중...");
-            postArticle(g, pubDateText, title, source, link);
+            postArticle(g, pubDateText, title, source, link, originallink);
             cnt++;
           } else {
             Logger.log(`'${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
@@ -278,7 +278,7 @@ function getArticle(
         }
         if (title.includes(g.keyword)) {
           Logger.log(`[${source}] '${title}' 항목 게시 중...`);
-          postArticle(g, pubDateText, title, source, link);
+          postArticle(g, pubDateText, title, source, link, originallink);
           cnt++;
         } else {
           Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
@@ -310,7 +310,8 @@ function postArticle(
   pubDateText: string,
   title: string,
   source: string,
-  link: string
+  link: string,
+  originallink: string
 ) {
   try {
     const url = `https://api.telegram.org/bot${g.TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -320,7 +321,10 @@ function postArticle(
         chat_id: g.TELEGRAM_CHAT_ID,
         text: createArticleTemplate(pubDateText, title, source, removePort(link)),
         parse_mode: 'HTML',
-        link_preview_options: JSON.stringify({ url: removePort(link), prefer_large_media: true }),
+        link_preview_options: JSON.stringify({
+          url: removePort(originallink),
+          prefer_large_media: true,
+        }),
       },
     };
 

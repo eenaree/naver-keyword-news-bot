@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2025년 6월 26일
+ * - 마지막 업데이트 : 2025년 8월 25일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -675,9 +675,9 @@ export function listSource() {
     ['sentv.co.kr', '서울경제TV'],
     ['seongjuro.co.kr', '성주신문'],
     ['seoul.co.kr', '서울신문'],
-    ['seoultimes.news', '서울타임즈뉴스'],
     ['seouleconews.com', '서울이코노미뉴스'],
     ['seoulfn.com', '서울파이낸스'],
+    ['seoultimes.news', '서울타임즈뉴스'],
     ['seoulwire.com', '서울와이어'],
     ['shinailbo.co.kr', '신아일보'],
     ['shindonga.donga.com', '신동아'],
@@ -843,8 +843,8 @@ export function listSource() {
     ['wowtv.co.kr', '한국경제TV'],
     ['wsobi.com', '여성소비자신문'],
     ['xportsnews.com', '엑스포츠뉴스'],
-    ['yangsanilbo.com', '양산신문'],
     ['yakup.com', '약업신문'],
+    ['yangsanilbo.com', '양산신문'],
     ['yeongnam.com', '영남일보'],
     ['yna.co.kr', '연합뉴스'],
     ['yna.kr', '연합뉴스'],

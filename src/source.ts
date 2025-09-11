@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2025년 8월 25일
+ * - 마지막 업데이트 : 2025년 9월 11일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -221,9 +221,9 @@ export function listSource() {
     ['facttv.kr', '팩트TV'],
     ['farminsight.net', '농장에서식탁까지'],
     ['farmnmarket.com', '팜앤마켓매거진'],
-    ['ferrotimes.com', '페로타임즈'],
     ['fashionbiz.co.kr', '패션비즈'],
     ['fashionn.com', '패션엔'],
+    ['ferrotimes.com', '페로타임즈'],
     ['fetv.co.kr', 'FETV'],
     ['fieldnews.kr', '필드뉴스'],
     ['financialpost.co.kr', '파이낸셜포스트'],

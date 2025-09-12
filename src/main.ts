@@ -188,10 +188,10 @@ function getArticle(
 
     // 저장된 기사의 링크가 없는 경우 => 앱 초기 설정 단계이므로 마지막 기사의 링크와 업데이트 시점을 저장하고 트리거 자동설정
     if (!(lastArticleLink && lastArticleUpdateTime)) {
-      setProperty('lastArticleLink', originallink);
-      setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
       const hasTrigger = checkTriggerExists('runFetchingBot');
       if (!hasTrigger) {
+        setProperty('lastArticleLink', originallink);
+        setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
         Logger.log('runFetchingBot 트리거를 생성합니다.');
         ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();
       }

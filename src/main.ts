@@ -168,137 +168,126 @@ function checkTriggerExists(triggerName: string) {
   return hasTrigger;
 }
 
+function parseFeed(feed: GoogleAppsScript.URL_Fetch.HTTPResponse) {
+  const xml = XmlService.parse(feed.getContentText());
+  return xml.getRootElement().getChild('channel').getChildren('item').reverse();
+}
+
+function findLastArticleIndex(
+  items: GoogleAppsScript.XML_Service.Element[],
+  lastArticleLink: string | null
+) {
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].getChildText('originallink') === lastArticleLink) {
+      Logger.log(`마지막 업데이트된 기사를 찾았습니다. 100개 중 ${i + 1}번째`);
+      return i;
+    }
+  }
+  return -1;
+}
+
+function shouldProcessArticle(lastArticleUpdateTime: number | null, pubDate: Date) {
+  return lastArticleUpdateTime !== null && pubDate.getTime() > lastArticleUpdateTime;
+}
+
+function processArticles(
+  g: ReturnType<typeof globalVariables>,
+  items: GoogleAppsScript.XML_Service.Element[],
+  lastArticleUpdateTime: number,
+  lastArticleIndex = 0
+) {
+  let cnt = 0;
+
+  for (let i = lastArticleIndex; i < items.length; i++) {
+    const title = bleachText(items[i].getChildText('title'));
+    const link = items[i].getChildText('link');
+    const originallink = items[i].getChildText('originallink');
+    const source = getSource(originallink);
+    const description = bleachText(items[i].getChildText('description'));
+    const pubDate = new Date(items[i].getChildText('pubDate'));
+    const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
+
+    if (!shouldProcessArticle(lastArticleUpdateTime, pubDate)) {
+      Logger.log(`[${source}] '${title}' 항목 업로드 시간: ${pubDateText}`);
+      Logger.log(
+        `[${source}] '${title}' 항목은 마지막 기사 업데이트 시간 이전에 업로드된 기사입니다.`
+      );
+      Logger.log(link);
+      continue;
+    }
+
+    // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
+    if (g.DEBUG) {
+      Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
+      Logger.log(`${source}, ${pubDateText}\n${title}\n${description}\n${link}`);
+    }
+
+    // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
+    else {
+      if (title.includes(g.keyword)) {
+        Logger.log(`[${source}] '${title}' 항목 게시 중...`);
+        postArticle(g, pubDateText, title, source, link, originallink);
+        cnt++;
+      } else {
+        Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
+        Logger.log(link);
+      }
+    }
+
+    // PropertiesService 객체에 마지막 뉴스 업데이트 시점과 링크를 새로 업데이트한다.
+    setProperty('lastArticleLink', originallink);
+    setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
+  }
+
+  Logger.log(`총 ${cnt}개의 항목이 게시되었습니다.`);
+}
+
+function createTrigger() {
+  Logger.log('runFetchingBot 트리거를 생성합니다.');
+  ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();
+  setProperty('lastArticleLink', '');
+  setProperty(
+    'lastArticleUpdateTime',
+    `${new Date().getTime() + new Date().getTimezoneOffset() * 60 * 100}`
+  );
+}
+
 function getArticle(
   g: ReturnType<typeof globalVariables>,
   feed: GoogleAppsScript.URL_Fetch.HTTPResponse,
   lastArticleLink: string | null,
-  lastArticleUpdateTime: number | null
+  lastArticleUpdateTime: number
 ) {
   // 뉴스 검색 결과물을 가져와 item 단위로 시간순 정렬시키고 Fetching 작업을 시작한다.
-  const xml = XmlService.parse(feed.getContentText());
-  const items = xml.getRootElement().getChild('channel').getChildren('item').reverse();
+  const items = parseFeed(feed);
+  const lastArticleIndex = findLastArticleIndex(items, lastArticleLink);
 
-  let cnt = 0;
-  let linkIndex = -1;
-
-  for (let i = 0; i < items.length; i++) {
-    // 각 item 별로 데이터 필드들을 가져온다.
-    const originallink = items[i].getChildText('originallink');
-    const pubDate = new Date(items[i].getChildText('pubDate'));
-
-    // 저장된 기사의 링크가 없는 경우 => 앱 초기 설정 단계이므로 마지막 기사의 링크와 업데이트 시점을 저장하고 트리거 자동설정
-    if (!(lastArticleLink && lastArticleUpdateTime)) {
-      const hasTrigger = checkTriggerExists('runFetchingBot');
-      if (!hasTrigger) {
-        setProperty('lastArticleLink', originallink);
-        setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
-        Logger.log('runFetchingBot 트리거를 생성합니다.');
-        ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();
-      }
-      return;
-    }
-
-    // 저장된 기사의 링크가 있는 경우 => 저장된 링크의 다음 기사부터 전달하도록 설정
-    if (originallink === lastArticleLink) {
-      Logger.log(`마지막 업데이트된 기사를 찾았습니다. 100개 중 ${i + 1}번째`);
-      linkIndex = i;
-      break;
-    }
-  }
-
-  if (linkIndex + 1 === 100) {
-    if (!lastArticleUpdateTime) {
-      throw new Error('마지막 업데이트 기사의 업로드 시간이 존재하지 않습니다.');
-    }
-    const lastPubDateText = formatDate(new Date(+lastArticleUpdateTime), 'yyyy-MM-dd HH:mm:ss');
-    Logger.log(`${lastPubDateText} 이후, 업데이트된 최신 기사가 없습니다.`);
-    return;
-  }
-
-  if (linkIndex === -1) {
+  if (lastArticleIndex === -1) {
     Logger.log('마지막 업데이트된 기사와 일치하는 기사가 없습니다.');
-    for (let i = 0; i < items.length; i++) {
-      const title = bleachText(items[i].getChildText('title'));
-      const link = items[i].getChildText('link');
-      const originallink = items[i].getChildText('originallink');
-      const source = getSource(originallink);
-      const description = bleachText(items[i].getChildText('description'));
-      const pubDate = new Date(items[i].getChildText('pubDate'));
-      const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
-
-      if (lastArticleUpdateTime && lastArticleUpdateTime < pubDate.getTime()) {
-        // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
-        if (g.DEBUG) {
-          Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
-          Logger.log(`${source}, ${pubDateText}\n${title}\n${description}\n${link}`);
-        }
-
-        // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
-        else {
-          if (title.includes(g.keyword)) {
-            Logger.log("'" + title + "' 항목 게시 중...");
-            postArticle(g, pubDateText, title, source, link, originallink);
-            cnt++;
-          } else {
-            Logger.log(`'${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
-          }
-        }
-
-        // PropertiesService 객체에 마지막 뉴스 업데이트 시점과 링크를 새로 업데이트한다.
-        setProperty('lastArticleLink', originallink);
-        setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
-      }
-    }
+    processArticles(g, items, lastArticleUpdateTime);
+  } else if (lastArticleIndex + 1 === items.length) {
+    const lastArticleUpdateTimeText = formatDate(new Date(lastArticleUpdateTime), 'yyyy-MM-dd HH:mm:ss');
+    Logger.log(`${lastArticleUpdateTimeText} 이후, 업데이트된 최신 기사가 없습니다.`);
+    return;
   } else {
-    Logger.log(`최신 기사: ${100 - linkIndex - 1}개`);
-    for (let i = linkIndex + 1; i < items.length; i++) {
-      const title = bleachText(items[i].getChildText('title'));
-      const link = items[i].getChildText('link');
-      const originallink = items[i].getChildText('originallink');
-      const source = getSource(originallink);
-      const description = bleachText(items[i].getChildText('description'));
-      const pubDate = new Date(items[i].getChildText('pubDate'));
-      const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
-
-      // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
-      if (g.DEBUG) {
-        Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
-        Logger.log(`${source}, ${pubDateText}\n${title}\n${description}\n${link}`);
-      }
-
-      // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
-      else {
-        if (lastArticleUpdateTime && pubDate.getTime() <= lastArticleUpdateTime) {
-          Logger.log(`[${source}] '${title}' 항목 업로드 시간: ${pubDateText}`);
-          Logger.log(
-            `[${source}] '${title}' 항목은 마지막 기사 업데이트 시간 이전에 업로드된 기사입니다.`
-          );
-          Logger.log(link);
-          continue;
-        }
-        if (title.includes(g.keyword)) {
-          Logger.log(`[${source}] '${title}' 항목 게시 중...`);
-          postArticle(g, pubDateText, title, source, link, originallink);
-          cnt++;
-        } else {
-          Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
-          Logger.log(link);
-        }
-      }
-
-      // PropertiesService 객체에 마지막 뉴스 업데이트 시점과 링크를 새로 업데이트한다.
-      setProperty('lastArticleLink', originallink);
-      setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
-    }
+    Logger.log(`최신 기사: ${items.length - lastArticleIndex - 1}개`);
+    processArticles(g, items, lastArticleUpdateTime, lastArticleIndex + 1);
   }
 
-  let lastPubTime = getProperty('lastArticleUpdateTime');
-  if (!lastPubTime) {
+  logLastArticleUpdateTime();
+}
+
+function logLastArticleUpdateTime() {
+  const lastArticleUpdateTime = getProperty('lastArticleUpdateTime');
+  if (!lastArticleUpdateTime) {
     throw new Error('마지막 업데이트 기사의 업로드 시간을 불러오는 도중 에러가 발생했습니다.');
   }
-  const lastPubDateText = formatDate(new Date(+lastPubTime), 'yyyy-MM-dd HH:mm:ss');
-  Logger.log(`* 총 ${cnt} 건의 항목이 게시되었습니다.`);
-  Logger.log(`마지막 업데이트 기사의 업로드 시간: ${lastPubDateText}`);
+
+  const lastArticleUpdateTimeText = formatDate(
+    new Date(+lastArticleUpdateTime),
+    'yyyy-MM-dd HH:mm:ss'
+  );
+  Logger.log(`마지막 업데이트 기사의 업로드 시간: ${lastArticleUpdateTimeText}`);
 }
 
 function createArticleTemplate(pubDateText: string, title: string, source: string, link: string) {
@@ -393,6 +382,10 @@ function runFetchingBot() {
   // lastArticleLink 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
   if (!lastArticleLink) {
     Logger.log('* 뉴스봇 초기 설정을 시작합니다.');
+    const hasTrigger = checkTriggerExists('runFetchingBot');
+    if (!hasTrigger) {
+      createTrigger();
+    }
     feed = getFeed(g.keyword, g.clientId, g.clientSecret, true);
   } else {
     Logger.log('* 뉴스 피드를 가져오는 중입니다.');

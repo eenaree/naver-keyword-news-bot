@@ -1,5 +1,21 @@
 import { listSource } from './source';
 
+type FeedData = {
+  lastBuildDate: string;
+  total: number;
+  start: number;
+  display: number;
+  items: NewsItem[];
+};
+
+type NewsItem = {
+  title: string;
+  originallink: string;
+  link: string;
+  description: string;
+  pubDate: string;
+};
+
 function globalVariables() {
   /***********************************************************************************************
    * 뉴스봇 구동에 필요한 설정값들입니다. 아래 설명을 참고하시어 입력해주세요.
@@ -51,9 +67,9 @@ function getFeedUrl(keyword: string, startup: boolean) {
 
   // 뉴스봇을 최초로 실행한 경우에는 피드 체크 용도로 위의 설정값과 무관하게 가장 최신의 1개 뉴스만 전송한다.
   if (startup) {
-    return `https://openapi.naver.com/v1/search/news.xml?query=${encodedKeyword}&display=1&start=1&sort=date`;
+    return `https://openapi.naver.com/v1/search/news.json?query=${encodedKeyword}&display=1&start=1&sort=date`;
   }
-  return `https://openapi.naver.com/v1/search/news.xml?query=${encodedKeyword}&display=${display}&start=${start}&sort=${sort}`;
+  return `https://openapi.naver.com/v1/search/news.json?query=${encodedKeyword}&display=${display}&start=${start}&sort=${sort}`;
 }
 
 function getFeed(keyword: string, clientId: string, clientSecret: string, startup = false) {
@@ -168,17 +184,9 @@ function checkTriggerExists(triggerName: string) {
   return hasTrigger;
 }
 
-function parseFeed(feed: GoogleAppsScript.URL_Fetch.HTTPResponse) {
-  const xml = XmlService.parse(feed.getContentText());
-  return xml.getRootElement().getChild('channel').getChildren('item').reverse();
-}
-
-function findLastArticleIndex(
-  items: GoogleAppsScript.XML_Service.Element[],
-  lastArticleLink: string | null
-) {
+function findLastArticleIndex(items: NewsItem[], lastArticleLink: string | null) {
   for (let i = 0; i < items.length; i++) {
-    if (items[i].getChildText('originallink') === lastArticleLink) {
+    if (items[i].originallink === lastArticleLink) {
       Logger.log(`마지막 업데이트된 기사를 찾았습니다. 100개 중 ${i + 1}번째`);
       return i;
     }
@@ -192,19 +200,19 @@ function shouldProcessArticle(lastArticleUpdateTime: number | null, pubDate: Dat
 
 function processArticles(
   g: ReturnType<typeof globalVariables>,
-  items: GoogleAppsScript.XML_Service.Element[],
+  items: NewsItem[],
   lastArticleUpdateTime: number,
   lastArticleIndex = 0
 ) {
   let cnt = 0;
 
   for (let i = lastArticleIndex; i < items.length; i++) {
-    const title = bleachText(items[i].getChildText('title'));
-    const link = items[i].getChildText('link');
-    const originallink = items[i].getChildText('originallink');
+    const title = bleachText(items[i].title);
+    const link = items[i].link;
+    const originallink = items[i].originallink;
     const source = getSource(originallink);
-    const description = bleachText(items[i].getChildText('description'));
-    const pubDate = new Date(items[i].getChildText('pubDate'));
+    const description = bleachText(items[i].description);
+    const pubDate = new Date(items[i].pubDate);
     const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
 
     if (!shouldProcessArticle(lastArticleUpdateTime, pubDate)) {
@@ -254,19 +262,20 @@ function createTrigger() {
 
 function getArticle(
   g: ReturnType<typeof globalVariables>,
-  feed: GoogleAppsScript.URL_Fetch.HTTPResponse,
+  items: NewsItem[],
   lastArticleLink: string | null,
   lastArticleUpdateTime: number
 ) {
-  // 뉴스 검색 결과물을 가져와 item 단위로 시간순 정렬시키고 Fetching 작업을 시작한다.
-  const items = parseFeed(feed);
   const lastArticleIndex = findLastArticleIndex(items, lastArticleLink);
 
   if (lastArticleIndex === -1) {
     Logger.log('마지막 업데이트된 기사와 일치하는 기사가 없습니다.');
     processArticles(g, items, lastArticleUpdateTime);
   } else if (lastArticleIndex + 1 === items.length) {
-    const lastArticleUpdateTimeText = formatDate(new Date(lastArticleUpdateTime), 'yyyy-MM-dd HH:mm:ss');
+    const lastArticleUpdateTimeText = formatDate(
+      new Date(lastArticleUpdateTime),
+      'yyyy-MM-dd HH:mm:ss'
+    );
     Logger.log(`${lastArticleUpdateTimeText} 이후, 업데이트된 최신 기사가 없습니다.`);
     return;
   } else {
@@ -395,7 +404,10 @@ function runFetchingBot() {
   // 네이버 뉴스 피드를 체크하고, 피드의 응답 코드가 정상(200)이라면 뉴스봇 기능을 구동한다.
   if (feed.getResponseCode() == 200) {
     Logger.log('* 뉴스 피드에 대한 필터링을 시작합니다.');
-    getArticle(g, feed, lastArticleLink, Number(lastArticleUpdateTime));
+    const feedData = JSON.parse(feed.getContentText());
+    if (isFeedData(feedData)) {
+      getArticle(g, feedData.items.reverse(), lastArticleLink, Number(lastArticleUpdateTime));
+    }
   }
 
   // 200 이외의 응답 코드가 리턴될 경우 에러 체크를 위한 헤더 및 내용을 로그로 출력시킨다.
@@ -405,4 +417,16 @@ function runFetchingBot() {
     Logger.log(feed.getContentText());
     return;
   }
+}
+
+function isFeedData(feed: unknown): feed is FeedData {
+  if (typeof feed !== 'object' || feed === null) return false;
+
+  return (
+    'lastBuildDate' in feed &&
+    'total' in feed &&
+    'start' in feed &&
+    'display' in feed &&
+    'items' in feed
+  );
 }

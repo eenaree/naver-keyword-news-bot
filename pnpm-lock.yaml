@@ -9,16 +9,16 @@ importers:
   .:
     devDependencies:
       '@types/google-apps-script':
-        specifier: ^1.0.83
-        version: 1.0.83
+        specifier: ^2.0.7
+        version: 2.0.7
       typescript:
         specifier: ^5.4.5
         version: 5.4.5
 
 packages:
 
-  '@types/google-apps-script@1.0.83':
-    resolution: {integrity: sha512-o+QNeNZxPAfYHzRiLHjub9qF0IILg21r9MzYlnrIHUT+/wcC70aqDfedmzKTgtzsj79zvoTZD0cjGgy46+1Ynw==}
+  '@types/google-apps-script@2.0.7':
+    resolution: {integrity: sha512-Yd5ham8GJNPoKSMt9Ep+B5IJzmfsvSNkOF1DWGQDyz66+1O/Jw/TEe6fltJcTKRvNlCCH5ZaGmmYDOgadA8QYQ==}
 
   typescript@5.4.5:
     resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
@@ -27,6 +27,6 @@ packages:
 
 snapshots:
 
-  '@types/google-apps-script@1.0.83': {}
+  '@types/google-apps-script@2.0.7': {}
 
   typescript@5.4.5: {}

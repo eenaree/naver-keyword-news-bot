@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2025년 9월 30일
+ * - 마지막 업데이트 : 2025년 11월 5일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -13,6 +13,7 @@ export function listSource() {
     ['100ssd.co.kr', '백세시대'],
     ['1conomynews.co.kr', '1코노미뉴스'],
     ['4th.kr', '포쓰저널'],
+    ['abcn.kr', 'ABC뉴스'],
     ['ablenews.co.kr', '에이블뉴스'],
     ['aflnews.co.kr', '농수축산신문'],
     ['agrinet.co.kr', '한국농어민신문'],
@@ -507,6 +508,7 @@ export function listSource() {
     ['mbccb.co.kr', 'MBC충북'],
     ['mbceg.co.kr', 'MBC강원영동'],
     ['mbcgn.kr', 'MBC경남'],
+    ['mbn.co.kr', 'MBN'],
     ['mbn.mk.co.kr', 'MBN'],
     ['mbnmoney.mbn.co.kr', '매일경제TV'],
     ['mcnews.co.kr', '매일건설신문'],

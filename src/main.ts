@@ -184,29 +184,24 @@ function checkTriggerExists(triggerName: string) {
   return hasTrigger;
 }
 
-function findLastArticleIndex(items: NewsItem[], lastArticleLink: string | null) {
+function findFirstIndexByLastUpdatedTime(items: NewsItem[], lastArticleUpdateTime: number) {
   for (let i = 0; i < items.length; i++) {
-    if (items[i].originallink === lastArticleLink) {
-      Logger.log(`마지막 업데이트된 기사를 찾았습니다. 100개 중 ${i + 1}번째`);
+    if (new Date(items[i].pubDate).getTime() === lastArticleUpdateTime) {
+      Logger.log(`마지막 업데이트 기사 시간과 동일한 기사를 찾았습니다. 100개 중 ${i + 1}번째`);
       return i;
     }
   }
   return -1;
 }
 
-function shouldProcessArticle(lastArticleUpdateTime: number | null, pubDate: Date) {
-  return lastArticleUpdateTime !== null && pubDate.getTime() > lastArticleUpdateTime;
-}
-
 function processArticles(
   g: ReturnType<typeof globalVariables>,
   items: NewsItem[],
-  lastArticleUpdateTime: number,
-  lastArticleIndex = 0
+  lastArticleLinks: string[] = []
 ) {
   let cnt = 0;
 
-  for (let i = lastArticleIndex; i < items.length; i++) {
+  for (let i = 0; i < items.length; i++) {
     const title = bleachText(items[i].title);
     const link = items[i].link;
     const originallink = items[i].originallink;
@@ -215,36 +210,47 @@ function processArticles(
     const pubDate = new Date(items[i].pubDate);
     const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
 
-    if (!shouldProcessArticle(lastArticleUpdateTime, pubDate)) {
-      Logger.log(`[${source}] '${title}' 항목 업로드 시간: ${pubDateText}`);
-      Logger.log(
-        `[${source}] '${title}' 항목은 마지막 기사 업데이트 시간 이전에 업로드된 기사입니다.`
-      );
+    const isArticleChecked = lastArticleLinks.includes(originallink);
+    if (isArticleChecked) {
+      Logger.log(`[${source}] '${title}' 항목은 이전 실행시간에 확인한 기사입니다.`);
       Logger.log(link);
       continue;
-    }
+    } else {
+      // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
+      if (g.DEBUG) {
+        Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
+        Logger.log(`${source}, ${pubDateText}\n${title}\n${description}\n${link}`);
+      }
 
-    // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
-    if (g.DEBUG) {
-      Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
-      Logger.log(`${source}, ${pubDateText}\n${title}\n${description}\n${link}`);
-    }
+      // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
+      else {
+        if (title.includes(g.keyword)) {
+          Logger.log(`[${source}] '${title}' 항목 게시 중...`);
+          postArticle(g, pubDateText, title, source, link);
+          cnt++;
+        } else {
+          Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
+          Logger.log(link);
+        }
+      }
 
-    // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
-    else {
-      if (title.includes(g.keyword)) {
-        Logger.log(`[${source}] '${title}' 항목 게시 중...`);
-        postArticle(g, pubDateText, title, source, link);
-        cnt++;
+      // PropertiesService 객체에 마지막 뉴스 업데이트 시점과 링크를 새로 업데이트한다.
+      const savedLastArticleLinks = getProperty('lastArticleLinks');
+      const savedLastArticleUpdateTime = getProperty('lastArticleUpdateTime');
+      if (+(savedLastArticleUpdateTime ?? 0) < pubDate.getTime()) {
+        setProperty('lastArticleLinks', JSON.stringify([originallink]));
+        setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
       } else {
-        Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
-        Logger.log(link);
+        setProperty(
+          'lastArticleLinks',
+          JSON.stringify([
+            ...(savedLastArticleLinks ? JSON.parse(savedLastArticleLinks) : []),
+            originallink,
+          ])
+        );
+        setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
       }
     }
-
-    // PropertiesService 객체에 마지막 뉴스 업데이트 시점과 링크를 새로 업데이트한다.
-    setProperty('lastArticleLink', originallink);
-    setProperty('lastArticleUpdateTime', `${pubDate.getTime()}`);
   }
 
   Logger.log(`총 ${cnt}개의 항목이 게시되었습니다.`);
@@ -253,7 +259,7 @@ function processArticles(
 function createTrigger() {
   Logger.log('runFetchingBot 트리거를 생성합니다.');
   ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();
-  setProperty('lastArticleLink', '');
+  setProperty('lastArticleLinks', JSON.stringify([]));
   setProperty(
     'lastArticleUpdateTime',
     `${new Date().getTime() + new Date().getTimezoneOffset() * 60 * 100}`
@@ -263,24 +269,20 @@ function createTrigger() {
 function getArticle(
   g: ReturnType<typeof globalVariables>,
   items: NewsItem[],
-  lastArticleLink: string | null,
+  lastArticleLinks: string[],
   lastArticleUpdateTime: number
 ) {
-  const lastArticleIndex = findLastArticleIndex(items, lastArticleLink);
+  const firstArticleIndexAtLastUpdate = findFirstIndexByLastUpdatedTime(
+    items,
+    lastArticleUpdateTime
+  );
 
-  if (lastArticleIndex === -1) {
-    Logger.log('마지막 업데이트된 기사와 일치하는 기사가 없습니다.');
-    processArticles(g, items, lastArticleUpdateTime);
-  } else if (lastArticleIndex + 1 === items.length) {
-    const lastArticleUpdateTimeText = formatDate(
-      new Date(lastArticleUpdateTime),
-      'yyyy-MM-dd HH:mm:ss'
-    );
-    Logger.log(`${lastArticleUpdateTimeText} 이후, 업데이트된 최신 기사가 없습니다.`);
-    return;
+  if (firstArticleIndexAtLastUpdate === -1) {
+    Logger.log('마지막 업데이트된 기사 시간과 일치하는 기사가 없습니다.');
+    processArticles(g, items);
   } else {
-    Logger.log(`최신 기사: ${items.length - lastArticleIndex - 1}개`);
-    processArticles(g, items, lastArticleUpdateTime, lastArticleIndex + 1);
+    Logger.log(`최신 기사: ${items.length - firstArticleIndexAtLastUpdate}개`);
+    processArticles(g, items.slice(firstArticleIndexAtLastUpdate), lastArticleLinks);
   }
 
   logLastArticleUpdateTime();
@@ -383,12 +385,12 @@ function runFetchingBot() {
   }
 
   // PropertiesService 객체에 저장된 lastArticleLink 속성값이 있는지 체크한다.
-  const lastArticleLink = getProperty('lastArticleLink');
-  const lastArticleUpdateTime = getProperty('lastArticleUpdateTime');
+  const savedLastArticleLinks = getProperty('lastArticleLinks');
+  const savedLastArticleUpdateTime = getProperty('lastArticleUpdateTime');
   let feed: GoogleAppsScript.URL_Fetch.HTTPResponse;
 
-  // lastArticleLink 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
-  if (!lastArticleLink) {
+  // lastArticleLinks 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
+  if (!savedLastArticleLinks) {
     Logger.log('* 뉴스봇 초기 설정을 시작합니다.');
     const hasTrigger = checkTriggerExists('runFetchingBot');
     if (!hasTrigger) {
@@ -405,7 +407,9 @@ function runFetchingBot() {
     Logger.log('* 뉴스 피드에 대한 필터링을 시작합니다.');
     const feedData = JSON.parse(feed.getContentText());
     if (isFeedData(feedData)) {
-      getArticle(g, feedData.items.reverse(), lastArticleLink, Number(lastArticleUpdateTime));
+      const lastArticleLinks = savedLastArticleLinks ? JSON.parse(savedLastArticleLinks) : [];
+      const lastArticleUpdateTime = +(savedLastArticleUpdateTime ?? 0);
+      getArticle(g, feedData.items.reverse(), lastArticleLinks, lastArticleUpdateTime);
     }
   }
 

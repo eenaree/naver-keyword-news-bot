@@ -404,7 +404,7 @@ function runFetchingBot() {
   const items = fetchFeedItems(g, isBotInitialized);
   if (items) {
     const lastArticleLinks = parseJSON<string[]>(savedLastArticleLinks, []);
-    const lastArticleUpdateTime = +(savedLastArticleUpdateTime ?? 0);
+    const lastArticleUpdateTime = Number(savedLastArticleUpdateTime) || Date.now();
     handleArticleUpdates(g, items.reverse(), lastArticleLinks, lastArticleUpdateTime);
   }
 }
@@ -415,10 +415,7 @@ function checkAndInitializeBot(savedLastArticleLinks: string | null) {
     Logger.log('* runFetchingBot 트리거를 생성하고 뉴스봇 초기화 작업을 시작합니다.');
     createTrigger();
     setProperty('lastArticleLinks', JSON.stringify([]));
-    setProperty(
-      'lastArticleUpdateTime',
-      `${new Date().getTime() + new Date().getTimezoneOffset() * 60 * 100}`
-    );
+    setProperty('lastArticleUpdateTime', `${Date.now() - 5 * 60 * 1000}`);
     return true;
   }
 }

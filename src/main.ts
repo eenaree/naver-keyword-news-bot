@@ -202,6 +202,17 @@ function parseJSON<T>(str: string | null | undefined, fallback: T) {
   }
 }
 
+function normalizeNewsItem(item: NewsItem) {
+  return {
+    title: bleachText(item.title),
+    link: item.link,
+    originallink: item.originallink,
+    source: getSource(item.originallink),
+    description: bleachText(item.description),
+    pubDate: new Date(item.pubDate),
+  };
+}
+
 function processArticles(
   g: ReturnType<typeof globalVariables>,
   items: NewsItem[],
@@ -217,12 +228,7 @@ function processArticles(
   const linkToPubTime = new Map<string, number>();
 
   for (let i = 0; i < items.length; i++) {
-    const title = bleachText(items[i].title);
-    const link = items[i].link;
-    const originallink = items[i].originallink;
-    const source = getSource(originallink);
-    const description = bleachText(items[i].description);
-    const pubDate = new Date(items[i].pubDate);
+    const { title, link, originallink, source, description, pubDate } = normalizeNewsItem(items[i]);
     const pubDateText = formatDate(pubDate, 'yyyy-MM-dd HH:mm:ss');
     const pubTime = pubDate.getTime();
 
@@ -274,16 +280,10 @@ function processArticles(
 }
 
 function createTrigger() {
-  Logger.log('runFetchingBot 트리거를 생성합니다.');
   ScriptApp.newTrigger('runFetchingBot').timeBased().everyMinutes(5).create();
-  setProperty('lastArticleLinks', JSON.stringify([]));
-  setProperty(
-    'lastArticleUpdateTime',
-    `${new Date().getTime() + new Date().getTimezoneOffset() * 60 * 100}`
-  );
 }
 
-function getArticle(
+function handleArticleUpdates(
   g: ReturnType<typeof globalVariables>,
   items: NewsItem[],
   lastArticleLinks: string[],
@@ -293,20 +293,9 @@ function getArticle(
     items,
     lastArticleUpdateTime
   );
-
-  if (firstArticleIndexAtLastUpdate === -1) {
-    Logger.log('마지막 업데이트된 기사 시간과 일치하는 기사가 없습니다.');
-    processArticles(g, items, lastArticleLinks, lastArticleUpdateTime);
-  } else {
-    Logger.log(`최신 기사: ${items.length - firstArticleIndexAtLastUpdate}개`);
-    processArticles(
-      g,
-      items.slice(firstArticleIndexAtLastUpdate),
-      lastArticleLinks,
-      lastArticleUpdateTime
-    );
-  }
-
+  const startIndex = firstArticleIndexAtLastUpdate === -1 ? 0 : firstArticleIndexAtLastUpdate;
+  Logger.log(`마지막 업데이트 시간 이후의 기사: ${items.length - startIndex}개`);
+  processArticles(g, items.slice(startIndex), lastArticleLinks, lastArticleUpdateTime);
   logLastArticleUpdateTime();
 }
 
@@ -409,38 +398,42 @@ function runFetchingBot() {
   // PropertiesService 객체에 저장된 lastArticleLink 속성값이 있는지 체크한다.
   const savedLastArticleLinks = getProperty('lastArticleLinks');
   const savedLastArticleUpdateTime = getProperty('lastArticleUpdateTime');
-  let feed: GoogleAppsScript.URL_Fetch.HTTPResponse;
 
-  // lastArticleLinks 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
-  if (!savedLastArticleLinks) {
-    Logger.log('* 뉴스봇 초기 설정을 시작합니다.');
-    const hasTrigger = checkTriggerExists('runFetchingBot');
-    if (!hasTrigger) {
-      createTrigger();
-    }
-    feed = getFeed(g.keyword, g.clientId, g.clientSecret, true);
-  } else {
-    Logger.log('* 뉴스 피드를 가져오는 중입니다.');
-    feed = getFeed(g.keyword, g.clientId, g.clientSecret);
+  // lastArticleLinks 속성값의 유무로 뉴스봇의 초기화 여부를 판단하고 뉴스 피드를 받아온다.
+  const isBotInitialized = checkAndInitializeBot(savedLastArticleLinks);
+  const items = fetchFeedItems(g, isBotInitialized);
+  if (items) {
+    const lastArticleLinks = parseJSON<string[]>(savedLastArticleLinks, []);
+    const lastArticleUpdateTime = +(savedLastArticleUpdateTime ?? 0);
+    handleArticleUpdates(g, items.reverse(), lastArticleLinks, lastArticleUpdateTime);
   }
+}
 
-  // 네이버 뉴스 피드를 체크하고, 피드의 응답 코드가 정상(200)이라면 뉴스봇 기능을 구동한다.
+function checkAndInitializeBot(savedLastArticleLinks: string | null) {
+  if (savedLastArticleLinks) return false;
+  if (!checkTriggerExists('runFetchingBot')) {
+    Logger.log('* runFetchingBot 트리거를 생성하고 뉴스봇 초기화 작업을 시작합니다.');
+    createTrigger();
+    setProperty('lastArticleLinks', JSON.stringify([]));
+    setProperty(
+      'lastArticleUpdateTime',
+      `${new Date().getTime() + new Date().getTimezoneOffset() * 60 * 100}`
+    );
+    return true;
+  }
+}
+
+function fetchFeedItems(g: ReturnType<typeof globalVariables>, startup = false) {
+  Logger.log('* 뉴스 피드를 가져오는 중입니다.');
+  const feed = getFeed(g.keyword, g.clientId, g.clientSecret, startup);
   if (feed.getResponseCode() == 200) {
     Logger.log('* 뉴스 피드에 대한 필터링을 시작합니다.');
     const feedData = JSON.parse(feed.getContentText());
-    if (isFeedData(feedData)) {
-      const lastArticleLinks = parseJSON<string[]>(savedLastArticleLinks, []);
-      const lastArticleUpdateTime = +(savedLastArticleUpdateTime ?? 0);
-      getArticle(g, feedData.items.reverse(), lastArticleLinks, lastArticleUpdateTime);
-    }
-  }
-
-  // 200 이외의 응답 코드가 리턴될 경우 에러 체크를 위한 헤더 및 내용을 로그로 출력시킨다.
-  else {
+    return isFeedData(feedData) ? feedData.items : [];
+  } else {
     Logger.log('* 뉴스를 가져오는 과정에서 에러가 발생했습니다. 로그를 참고해주세요.\n');
     Logger.log(feed.getHeaders());
     Logger.log(feed.getContentText());
-    return;
   }
 }
 

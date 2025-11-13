@@ -239,7 +239,9 @@ function processArticles(
       if (latestPubTime < pubTime) {
         latestPubTime = pubTime;
       }
-      Logger.log(`[${source}] '${title}' 항목은 이전 실행시간에 확인한 기사입니다.`);
+      Logger.log(
+        `[${source}] '${title}' 항목은 이전 실행시간에 확인한 기사입니다. 업로드 시간: ${pubDateText}`
+      );
       Logger.log(link);
       continue;
     }
@@ -256,7 +258,9 @@ function processArticles(
         postedCount++;
       }
     } else {
-      Logger.log(`[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다.`);
+      Logger.log(
+        `[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다. 업로드 시간: ${pubDateText}`
+      );
       Logger.log(link);
     }
 

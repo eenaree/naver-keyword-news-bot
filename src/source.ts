@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2025년 11월 16일
+ * - 마지막 업데이트 : 2025년 11월 18일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -42,7 +42,6 @@ export function listSource() {
     ['autodaily.co.kr', '엠투데이'],
     ['autotimes.co.kr', '오토타임즈'],
     ['babytimes.co.kr', '베이비타임즈'],
-    ['baduk.hangame.com', '한게임 바둑'],
     ['banronbodo.com', '반론보도닷컴'],
     ['basketkorea.com', '바스켓코리아'],
     ['bbc.com', 'BBC'],
@@ -200,7 +199,6 @@ export function listSource() {
     ['ekoreanews.co.kr', '이코리아'],
     ['electimes.com', '전기신문'],
     ['elle.co.kr', '엘르'],
-    ['en.yna.co.kr', 'EPA연합뉴스'],
     ['energy-news.co.kr', '에너지신문'],
     ['energydaily.co.kr', '에너지데일리'],
     ['enetnews.co.kr', '이넷뉴스'],
@@ -628,7 +626,6 @@ export function listSource() {
     ['opinionnews.co.kr', '오피니언뉴스'],
     ['osen.co.kr', 'OSEN'],
     ['outdoornews.co.kr', '아웃도어뉴스'],
-    ['outsourcing.co.kr', '아웃소싱타임스'],
     ['paxetv.com', '팍스경제TV'],
     ['pckworld.com', '한국기독공보'],
     ['pdjournal.com', 'PD저널'],
@@ -647,7 +644,6 @@ export function listSource() {
     ['press9.kr', '프레스나인'],
     ['pressian.com', '프레시안'],
     ['pressman.kr', '프레스맨'],
-    ['psnews.co.kr', '퍼블릭뉴스'],
     ['psychiatricnews.net', '정신의학신문'],
     ['public25.com', '퍼블릭타임스'],
     ['queen.co.kr', 'Queen 이코노미퀸'],
@@ -691,7 +687,6 @@ export function listSource() {
     ['shindonga.donga.com', '신동아'],
     ['siminilbo.co.kr', '시민일보'],
     ['siminsori.com', '시민의소리'],
-    ['sisa-news.com', '시사뉴스'],
     ['sisacast.kr', '시사캐스트'],
     ['sisafocus.co.kr', '시사포커스'],
     ['sisain.co.kr', '시사IN'],

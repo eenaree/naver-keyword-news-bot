@@ -254,8 +254,13 @@ function processArticles(
       } else {
         // DEBUG 모드가 아닐 경우 => 뉴스봇 기능을 실행한다.
         Logger.log(`[${source}] '${title}' 항목 게시 중...`);
-        postArticle(g, pubDateText, title, source, link);
-        postedCount++;
+        try {
+          postArticle(g, pubDateText, title, source, link);
+          postedCount++;
+        } catch (error) {
+          Logger.log(`[${source}] '${title}' 항목 게시 중 에러가 발생했습니다.`);
+          break;
+        }
       }
     } else {
       Logger.log(

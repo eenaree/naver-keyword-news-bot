@@ -302,7 +302,8 @@ function handleArticleUpdates(
     items,
     lastArticleUpdateTime
   );
-  const startIndex = firstArticleIndexAtLastUpdate === -1 ? 0 : firstArticleIndexAtLastUpdate;
+  const startIndex =
+    firstArticleIndexAtLastUpdate === -1 ? items.length : firstArticleIndexAtLastUpdate;
   Logger.log(`마지막 업데이트 시간 이후의 기사: ${items.length - startIndex}개`);
   processArticles(g, items.slice(startIndex), lastArticleLinks, lastArticleUpdateTime);
   logLastArticleUpdateTime();

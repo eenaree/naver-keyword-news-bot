@@ -276,7 +276,7 @@ function processArticles(
   }
 
   // SAFETY_MARGIN_MS 만큼 여유를 두고 마지막 업데이트 시간 설정
-  const newLastUpdateTime = latestPubTime - SAFETY_MARGIN_MS;
+  const newLastUpdateTime = items.length === 0 ? latestPubTime : latestPubTime - SAFETY_MARGIN_MS;
   const filteredLinks = Array.from(processedLinks).filter((link) => {
     const pub = linkToPubTime.get(link);
     return pub && pub >= newLastUpdateTime;

@@ -286,6 +286,8 @@ function processArticles(
   setProperty('lastArticleUpdateTime', `${newLastUpdateTime}`);
 
   Logger.log(`총 ${postedCount}개의 항목이 게시되었습니다.`);
+
+  return newLastUpdateTime;
 }
 
 function createTrigger() {
@@ -305,16 +307,16 @@ function handleArticleUpdates(
   const startIndex =
     firstArticleIndexAtLastUpdate === -1 ? items.length : firstArticleIndexAtLastUpdate;
   Logger.log(`마지막 업데이트 시간 이후의 기사: ${items.length - startIndex}개`);
-  processArticles(g, items.slice(startIndex), lastArticleLinks, lastArticleUpdateTime);
-  logLastArticleUpdateTime();
+  const newLastUpdateTime = processArticles(
+    g,
+    items.slice(startIndex),
+    lastArticleLinks,
+    lastArticleUpdateTime
+  );
+  logLastArticleUpdateTime(newLastUpdateTime);
 }
 
-function logLastArticleUpdateTime() {
-  const lastArticleUpdateTime = getProperty('lastArticleUpdateTime');
-  if (!lastArticleUpdateTime) {
-    throw new Error('마지막 업데이트 기사의 업로드 시간을 불러오는 도중 에러가 발생했습니다.');
-  }
-
+function logLastArticleUpdateTime(lastArticleUpdateTime: number) {
   const lastArticleUpdateTimeText = formatDate(
     new Date(+lastArticleUpdateTime),
     'yyyy-MM-dd HH:mm:ss'

@@ -713,7 +713,6 @@ export function listSource() {
     ['sportschosun.com', '스포츠조선'],
     ['sportsq.co.kr', '스포츠Q'],
     ['sportsseoul.com', '스포츠서울'],
-    ['sportsw.kr', '스포츠W'],
     ['sportsworldi.com', '스포츠월드'],
     ['spotvnews.co.kr', '스포티비뉴스'],
     ['srn.hcn.co.kr', 'HCN 새로넷방송'],

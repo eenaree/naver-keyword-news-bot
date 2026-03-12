@@ -207,7 +207,7 @@ function normalizeNewsItem(item: NewsItem) {
     title: bleachText(item.title),
     link: item.link,
     originallink: item.originallink,
-    source: getSource(item.originallink),
+    source: getSource(item.originallink === '' ? item.link : item.originallink),
     description: bleachText(item.description),
     pubDate: new Date(item.pubDate),
   };

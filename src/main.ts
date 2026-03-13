@@ -335,25 +335,35 @@ function postArticle(
   source: string,
   link: string
 ) {
-  try {
-    const url = `https://api.telegram.org/bot${g.TELEGRAM_BOT_TOKEN}/sendMessage`;
-    const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'post',
-      payload: {
-        chat_id: g.TELEGRAM_CHAT_ID,
-        text: createArticleTemplate(pubDateText, title, source, removePort(link)),
-        parse_mode: 'HTML',
-        link_preview_options: JSON.stringify({
-          url: removePort(link),
-          prefer_large_media: true,
-        }),
-      },
-    };
+  const url = `https://api.telegram.org/bot${g.TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'post',
+    payload: {
+      chat_id: g.TELEGRAM_CHAT_ID,
+      text: createArticleTemplate(pubDateText, title, source, removePort(link)),
+      parse_mode: 'HTML',
+      link_preview_options: JSON.stringify({
+        url: removePort(link),
+        prefer_large_media: true,
+      }),
+    },
+    muteHttpExceptions: true,
+  };
 
-    UrlFetchApp.fetch(url, params);
-  } catch (error) {
-    Logger.log(error);
-    throw new Error('텔레그램 메세지를 전송하는 과정에서 에러가 발생했습니다.');
+  const response = UrlFetchApp.fetch(url, params);
+  const responseCode = response.getResponseCode();
+  // 200번대(성공) 혹은 502, 504(네트워크 오류, 타임아웃이지만 실제론 보내졌을 가능성 큼)인 경우 체크
+  if (responseCode >= 200 && responseCode < 300) {
+    return response;
+  } else if (responseCode === 502) {
+    Logger.log(`[경고] 502 Bad Gateway 발생. 메시지는 전송되었을 가능성이 높습니다: ${title}`);
+    return response;
+  } else if (responseCode === 504) {
+    Logger.log(`[경고] 504 Gateway Timeout 발생. 메시지는 전송되었을 가능성이 높습니다: ${title}`);
+    return response;
+  } else {
+    // 400번대 에러 등 정말 실패한 경우에만 에러 던지기
+    throw new Error(`텔레그램 전송 실패 (코드: ${responseCode}): ${response.getContentText()}`);
   }
 }
 

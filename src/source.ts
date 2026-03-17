@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2026년 3월 5일
+ * - 마지막 업데이트 : 2026년 3월 17일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -82,6 +82,7 @@ export function listSource() {
     ['byline.network', '바이라인네트워크'],
     ['bzeronews.com', '불교공뉴스'],
     ['cancerline.co.kr', '월간암'],
+    ['catchnews.kr', 'CATCH NEWS'],
     ['catholicnews.co.kr', '가톨릭뉴스 지금여기'],
     ['catholicpress.kr', '가톨릭프레스'],
     ['catholictimes.org', '가톨릭신문'],
@@ -282,7 +283,6 @@ export function listSource() {
     ['gosiweek.com', '피앤피뉴스'],
     ['gpkorea.com', '지피코리아'],
     ['gqkorea.co.kr', 'GQ'],
-    ['greendaily.co.kr', 'NBN NEWS'],
     ['greened.kr', '녹색경제신문'],
     ['greenpostkorea.co.kr', '그린포스트코리아'],
     ['gukjenews.com', '국제뉴스'],
@@ -552,7 +552,6 @@ export function listSource() {
     ['naeil.com', '내일신문'],
     ['namdonews.com', '남도일보'],
     ['natv.go.kr', '국회방송'],
-    ['nbnews.kr', 'NBN NEWS'],
     ['nbntv.co.kr', '내외경제tv'],
     ['nbntv.kr', 'NBN미디어'],
     ['nc.press', '뉴스컬처'],

@@ -396,6 +396,14 @@ function setProperty(property: string, value: string) {
 }
 
 function runFetchingBot() {
+  const lock = LockService.getScriptLock();
+
+  // 0초 대기: 즉시 확인해서 잠겨있으면 바로 false 반환
+  if (!lock.tryLock(0)) {
+    Logger.log('이전 트리거가 아직 실행 중입니다. 이번 회차는 안전하게 건너뜁니다.');
+    return; // 에러 없이 조용히 종료
+  }
+
   // 뉴스봇 구동 설정값들을 불러온다.
   const g = globalVariables();
 
@@ -424,10 +432,15 @@ function runFetchingBot() {
   // lastArticleLinks 속성값의 유무로 뉴스봇의 초기화 여부를 판단하고 뉴스 피드를 받아온다.
   const isBotInitialized = checkAndInitializeBot(savedLastArticleLinks);
   const items = fetchFeedItems(g, isBotInitialized);
-  if (items) {
-    const lastArticleLinks = parseJSON<string[]>(savedLastArticleLinks, []);
-    const lastArticleUpdateTime = Number(savedLastArticleUpdateTime) || Date.now();
-    handleArticleUpdates(g, items.reverse(), lastArticleLinks, lastArticleUpdateTime);
+  try {
+    if (items) {
+      const lastArticleLinks = parseJSON<string[]>(savedLastArticleLinks, []);
+      const lastArticleUpdateTime = Number(savedLastArticleUpdateTime) || Date.now();
+      handleArticleUpdates(g, items.reverse(), lastArticleLinks, lastArticleUpdateTime);
+    }
+  } finally {
+    console.log('---------작업 완료 후 다음 회차의 실행을 위한 잠금을 해제합니다.---------');
+    lock.releaseLock();
   }
 }
 

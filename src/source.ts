@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2026년 3월 17일
+ * - 마지막 업데이트 : 2026년 3월 27일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -303,7 +303,6 @@ export function listSource() {
     ['hellot.net', '헬로티'],
     ['hemophilia.co.kr', '헤모필리아라이프'],
     ['heraldmuse.com', '헤럴드뮤즈'],
-    ['heraldpop.com', '헤럴드POP'],
     ['hg-times.com', '한강타임즈'],
     ['hidoc.co.kr', '하이닥'],
     ['hidomin.com', '경북도민일보'],
@@ -536,7 +535,6 @@ export function listSource() {
     ['mk.co.kr', '매일경제'],
     ['mkhealth.co.kr', '매경헬스'],
     ['monews.co.kr', '메디칼업저버'],
-    ['moneys.co.kr', '머니S'],
     ['monsterzym.com', '몬스터짐'],
     ['monthly.chosun.com', '월간조선'],
     ['mookas.com', '무카스'],
@@ -681,7 +679,7 @@ export function listSource() {
     ['seoulwire.com', '서울와이어'],
     ['shinailbo.co.kr', '신아일보'],
     ['shindonga.donga.com', '신동아'],
-    ['sidae.com', '동향미디어 시대'],
+    ['sidae.com', '동행미디어 시대'],
     ['signal.sedaily.com', '서울경제'],
     ['siminilbo.co.kr', '시민일보'],
     ['siminsori.com', '시민의소리'],

@@ -4,7 +4,7 @@
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
  *
- * - 마지막 업데이트 : 2026년 6월 8일
+ * - 마지막 업데이트 : 2026년 6월 11일
  * ***********************************************************************************************/
 
 export function listSource() {
@@ -111,6 +111,7 @@ export function listSource() {
     ['civicnews.com', '시빅뉴스'],
     ['cjb.co.kr', 'CJB청주방송'],
     ['cmbdj.co.kr', 'CMB대전방송'],
+    ['cnbizm.com', 'CNB저널(문화경제)'],
     ['cnbnews.com', 'CNB뉴스'],
     ['cnet.co.kr', '씨넷코리아'],
     ['cnews.co.kr', '대한경제'],
@@ -810,7 +811,6 @@ export function listSource() {
     ['web.ubc.co.kr', 'ubc울산방송'],
     ['webeconomy.co.kr', '웹이코노미'],
     ['weekly.chosun.com', '주간조선'],
-    ['weekly.cnbnews.com', 'CNB저널(문화경제)'],
     ['weekly.donga.com', '주간동아'],
     ['weekly.hankooki.com', '주간한국'],
     ['weekly.khan.co.kr', '주간경향'],

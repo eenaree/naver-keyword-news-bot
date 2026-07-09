@@ -325,7 +325,7 @@ function logLastArticleUpdateTime(lastArticleUpdateTime: number) {
 }
 
 function createArticleTemplate(pubDateText: string, title: string, source: string, link: string) {
-  return `<b>${title}</b>\n- ${source}, ${pubDateText}\n\n${link}`;
+  return `<b>${escapeHtml(title)}</b>\n- ${source}, ${pubDateText}\n\n${link}`;
 }
 
 function postArticle(
@@ -372,17 +372,38 @@ function removePort(url: string) {
 }
 
 function bleachText(text: string) {
-  // 데이터 필드에 포함된 HTML Tag를 제거하고 Entity들을 원래 의도된 특수문자로 대체한다.
-  text = text.replace(/(<([^>]+)>)/gi, '');
-  text = text.replace(/&quot;/gi, '"');
-  text = text.replace(/&#039;/gi, "'");
-  // text = text.replace(/&lt;/gi, '<');
-  // text = text.replace(/&gt;/gi, '>');
-  // text = text.replace(/&amp;/gi, '&');
-  text = text.replace(/`/gi, "'");
-  text = text.replace(/&apos;/gi, "'");
+  if (!text) return '';
 
-  return text;
+  // 1. 데이터 필드에 포함된 HTML Tag 제거
+  let cleaned = text.replace(/(<([^>]+)>)/gi, '');
+
+  // 2. 글자 기반(Named) Entity들을 원래 의도된 특수문자로 대체
+  cleaned = cleaned
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&apos;/gi, "'")
+    .replace(/`/gi, "'");
+
+  // 3. 숫자 기반(Numerical) HTML 엔티티 일괄 복원
+  // 10진수 형태 (예: &#8729; -> ∙) 처리
+  cleaned = cleaned.replace(/&#(\d+);/g, (match: string, dec: string) =>
+    String.fromCodePoint(parseInt(dec, 10))
+  );
+  // 16진수 형태 (예: &#x2219; -> ∙) 처리
+  cleaned = cleaned.replace(/&#x([0-9a-f]+);/gi, (match: string, hex: string) =>
+    String.fromCodePoint(parseInt(hex, 16))
+  );
+
+  // 4. &amp;는 내부 엔티티 복원에 방해되지 않도록 마지막 단계 직전에 복원
+  cleaned = cleaned.replace(/&amp;/gi, '&');
+
+  return cleaned.replace(/^= /, '');
+}
+
+function escapeHtml(text: string) {
+  if (!text) return '';
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function getProperty(property: string) {

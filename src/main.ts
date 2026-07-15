@@ -16,6 +16,12 @@ type NewsItem = {
   pubDate: string;
 };
 
+type ArticleState = {
+  keyword: string;
+  links: string[];
+  datetime: string;
+};
+
 function globalVariables() {
   /***********************************************************************************************
    * 뉴스봇 구동에 필요한 설정값들입니다. 아래 설명을 참고하시어 입력해주세요.
@@ -40,7 +46,7 @@ function globalVariables() {
     clientSecret: '[네이버 오픈 API용 Client Secret]',
 
     // 네이버 뉴스 검색어
-    keyword: '',
+    keyword: [],
 
     // Telegram 설정
     TELEGRAM_BOT_TOKEN: '[TELEGRAM_BOT_TOKEN]',
@@ -72,22 +78,22 @@ function getFeedUrl(keyword: string, startup: boolean) {
   return `https://openapi.naver.com/v1/search/news.json?query=${encodedKeyword}&display=${display}&start=${start}&sort=${sort}`;
 }
 
-function getFeed(keyword: string, clientId: string, clientSecret: string, startup = false) {
-  try {
-    const feedUrl = getFeedUrl(keyword, startup);
-    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'get',
-      headers: {
-        'X-Naver-Client-Id': clientId,
-        'X-Naver-Client-Secret': clientSecret,
-      },
-    };
+function createSearchRequest(
+  keyword: string,
+  clientId: string,
+  clientSecret: string,
+  startup = false
+): GoogleAppsScript.URL_Fetch.URLFetchRequest {
+  const feedUrl = getFeedUrl(keyword, startup);
+  const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'get',
+    headers: {
+      'X-Naver-Client-Id': clientId,
+      'X-Naver-Client-Secret': clientSecret,
+    },
+  };
 
-    return UrlFetchApp.fetch(feedUrl, options);
-  } catch (error) {
-    Logger.log(error);
-    throw new Error('네이버 뉴스 피드를 불러오는 도중, 에러가 발생했습니다.');
-  }
+  return { url: feedUrl, ...options };
 }
 
 function getSource(originallink: string) {
@@ -216,15 +222,15 @@ function normalizeNewsItem(item: NewsItem) {
 function processArticles(
   g: ReturnType<typeof globalVariables>,
   items: NewsItem[],
-  lastArticleLinks: string[],
-  lastArticleUpdateTime: number
+  lastArticle: ArticleState,
+  index: number
 ) {
   const SAFETY_MARGIN_MS = 5 * 60 * 1000; // 5분의 안전 마진 시간
 
   let postedCount = 0;
-  let latestPubTime = lastArticleUpdateTime;
+  let latestPubTime = +lastArticle.datetime;
 
-  const processedLinks = new Set(lastArticleLinks);
+  const processedLinks = new Set(lastArticle.links);
   const linkToPubTime = new Map<string, number>();
 
   for (let i = 0; i < items.length; i++) {
@@ -246,7 +252,7 @@ function processArticles(
       continue;
     }
 
-    if (title.includes(g.keyword)) {
+    if (title.includes(g.keyword[index])) {
       // DEBUG 모드일 경우 => 뉴스봇 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
       if (g.DEBUG) {
         Logger.log('----- ' + items.length + '개 항목 중 ' + (i + 1) + '번째 -----');
@@ -264,7 +270,7 @@ function processArticles(
       }
     } else {
       Logger.log(
-        `[${source}] '${title}' 항목은 ${g.keyword}과 관련된 주요 기사가 아닙니다. 업로드 시간: ${pubDateText}`
+        `[${source}] '${title}' 항목은 ${g.keyword[index]}과 관련된 주요 기사가 아닙니다. 업로드 시간: ${pubDateText}`
       );
       Logger.log(link);
     }
@@ -282,8 +288,19 @@ function processArticles(
     return pub && pub >= newLastUpdateTime;
   });
 
-  setProperty('lastArticleLinks', JSON.stringify(filteredLinks));
-  setProperty('lastArticleUpdateTime', `${newLastUpdateTime}`);
+  const savedLastArticles = parseJSON<ArticleState[]>(getProperty('LAST_ARTICLES'), []);
+  const currentArticleState: ArticleState = {
+    keyword: g.keyword[index],
+    links: filteredLinks,
+    datetime: `${newLastUpdateTime}`,
+  };
+  const hasKeyword = savedLastArticles.some((article) => article.keyword === g.keyword[index]);
+  const updatedLastArticles: ArticleState[] = hasKeyword
+    ? savedLastArticles.map((article) =>
+        article.keyword === g.keyword[index] ? currentArticleState : article
+      )
+    : [...savedLastArticles, currentArticleState];
+  setProperty('LAST_ARTICLES', JSON.stringify(updatedLastArticles));
 
   Logger.log(`총 ${postedCount}개의 항목이 게시되었습니다.`);
 
@@ -297,22 +314,19 @@ function createTrigger() {
 function handleArticleUpdates(
   g: ReturnType<typeof globalVariables>,
   items: NewsItem[],
-  lastArticleLinks: string[],
-  lastArticleUpdateTime: number
+  lastArticle: ArticleState,
+  index: number
 ) {
   const firstArticleIndexAtLastUpdate = findFirstIndexByLastUpdatedTime(
     items,
-    lastArticleUpdateTime
+    +lastArticle.datetime
   );
   const startIndex =
     firstArticleIndexAtLastUpdate === -1 ? items.length : firstArticleIndexAtLastUpdate;
-  Logger.log(`마지막 업데이트 시간 이후의 기사: ${items.length - startIndex}개`);
-  const newLastUpdateTime = processArticles(
-    g,
-    items.slice(startIndex),
-    lastArticleLinks,
-    lastArticleUpdateTime
+  Logger.log(
+    `키워드: '${g.keyword[index]}' 마지막 업데이트 시간 이후의 기사: ${items.length - startIndex}개`
   );
+  const newLastUpdateTime = processArticles(g, items.slice(startIndex), lastArticle, index);
   logLastArticleUpdateTime(newLastUpdateTime);
 }
 
@@ -435,7 +449,7 @@ function runFetchingBot() {
   }
 
   // 네이버 뉴스 검색 키워드 유무를 확인한다.
-  if (!g.keyword) {
+  if (g.keyword.length === 0) {
     Logger.log('* 뉴스를 검색하실 키워드를 설정해주세요.\n');
     return;
   }
@@ -446,48 +460,79 @@ function runFetchingBot() {
     return;
   }
 
-  // PropertiesService 객체에 저장된 lastArticleLink 속성값이 있는지 체크한다.
-  const savedLastArticleLinks = getProperty('lastArticleLinks');
-  const savedLastArticleUpdateTime = getProperty('lastArticleUpdateTime');
+  // PropertiesService 객체에 저장된 LAST_ARTICLE 속성값이 있는지 체크한다.
+  const savedLastArticles = parseJSON<ArticleState[]>(getProperty('LAST_ARTICLES'), []);
 
-  // lastArticleLinks 속성값의 유무로 뉴스봇의 초기화 여부를 판단하고 뉴스 피드를 받아온다.
-  const isBotInitialized = checkAndInitializeBot(savedLastArticleLinks);
-  const items = fetchFeedItems(g, isBotInitialized);
+  // LAST_ARTICLE 속성값의 유무로 뉴스봇의 초기화 여부를 판단하고 뉴스 피드를 받아온다.
+  const isBotInitialized = checkAndInitializeBot(savedLastArticles);
+  const keywordNewsMap = fetchFeedItems(g, isBotInitialized);
+  const lastArticleMap = new Map(savedLastArticles.map((item) => [item.keyword, item]));
+  const syncedLastArticle = g.keyword.map((keyword) => {
+    const existingArticle = lastArticleMap.get(keyword);
+    return existingArticle ?? { keyword, links: [], datetime: `${new Date().getTime()}` };
+  });
+
   try {
-    if (items) {
-      const lastArticleLinks = parseJSON<string[]>(savedLastArticleLinks, []);
-      const lastArticleUpdateTime = Number(savedLastArticleUpdateTime) || Date.now();
-      handleArticleUpdates(g, items.reverse(), lastArticleLinks, lastArticleUpdateTime);
-    }
+    syncedLastArticle.forEach((article, index) => {
+      const items = keywordNewsMap.get(article.keyword);
+      if (items) {
+        handleArticleUpdates(g, items.reverse(), article, index);
+      }
+    });
   } finally {
     console.log('---------작업 완료 후 다음 회차의 실행을 위한 잠금을 해제합니다.---------');
     lock.releaseLock();
   }
 }
 
-function checkAndInitializeBot(savedLastArticleLinks: string | null) {
-  if (savedLastArticleLinks) return false;
+function checkAndInitializeBot(savedLastArticles: ArticleState[]) {
+  if (savedLastArticles.length > 0) return false;
   if (!checkTriggerExists('runFetchingBot')) {
     Logger.log('* runFetchingBot 트리거를 생성하고 뉴스봇 초기화 작업을 시작합니다.');
     createTrigger();
-    setProperty('lastArticleLinks', JSON.stringify([]));
-    setProperty('lastArticleUpdateTime', `${Date.now() - 5 * 60 * 1000}`);
+    setProperty('LAST_ARTICLES', JSON.stringify([]));
     return true;
   }
 }
 
 function fetchFeedItems(g: ReturnType<typeof globalVariables>, startup = false) {
   Logger.log('* 뉴스 피드를 가져오는 중입니다.');
-  const feed = getFeed(g.keyword, g.clientId, g.clientSecret, startup);
-  if (feed.getResponseCode() == 200) {
-    Logger.log('* 뉴스 피드에 대한 필터링을 시작합니다.');
-    const feedData = JSON.parse(feed.getContentText());
-    return isFeedData(feedData) ? feedData.items : [];
-  } else {
+
+  const searchRequests = g.keyword.map((keyword) =>
+    createSearchRequest(keyword, g.clientId, g.clientSecret, startup)
+  );
+  const responses = UrlFetchApp.fetchAll(searchRequests);
+
+  const keywordNewsMap = new Map<string, NewsItem[]>();
+  responses.forEach((response, index) => {
+    const keyword = g.keyword[index];
+    const items = parseSearchResponse(response);
+    if (items) {
+      keywordNewsMap.set(keyword, items);
+    }
+  });
+
+  return keywordNewsMap;
+}
+
+function parseSearchResponse(response: GoogleAppsScript.URL_Fetch.HTTPResponse): NewsItem[] | null {
+  if (response.getResponseCode() !== 200) {
     Logger.log('* 뉴스를 가져오는 과정에서 에러가 발생했습니다. 로그를 참고해주세요.\n');
-    Logger.log(feed.getHeaders());
-    Logger.log(feed.getContentText());
+    Logger.log(response.getHeaders());
+    Logger.log(response.getContentText());
+    return null;
   }
+
+  try {
+    const feedData = JSON.parse(response.getContentText());
+    if (isFeedData(feedData)) {
+      return feedData.items;
+    }
+  } catch (e) {
+    Logger.log(`* JSON 파싱 에러: ${e}`);
+  }
+
+  return null;
 }
 
 function isFeedData(feed: unknown): feed is FeedData {

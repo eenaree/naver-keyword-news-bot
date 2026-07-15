@@ -211,8 +211,8 @@ function parseJSON<T>(str: string | null | undefined, fallback: T) {
 function normalizeNewsItem(item: NewsItem) {
   return {
     title: bleachText(item.title),
-    link: item.link,
-    originallink: item.originallink,
+    link: decodeURIComponent(item.link),
+    originallink: decodeURIComponent(item.originallink),
     source: getSource(item.originallink === '' ? item.link : item.originallink),
     description: bleachText(item.description),
     pubDate: new Date(item.pubDate),
